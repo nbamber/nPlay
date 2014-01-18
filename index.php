@@ -1,32 +1,4 @@
 <?
-//TODO
-//add to github
-//change debug to proper logging
-//at end of station .reload results in null null and nothing is played
-
-//xbox always resets volume after reload
-//xbox sometimes starts at 00:00 rather than $timeDiff, reload on same page starts at right time though.
-
-//Auto add new files in dir option for station
-//Nicer Add Files Interface
-//Ability to add multiple cover arts to a station
-//Show demos for a station?
-//directories need to be clickable - click on dir loads and browses that dir
-//??? - device support re file type, eg xbone wont play m4a
-//Edit Stations / Add Files / Remove Files
-//Record number of station plays in station and sort by popularity
-//tabs for stations?
-//Don't show System Volume Information when listing directories
-//Page will reload if adding a station losing selections.
-//Bug with Jay Z Linkin Park Dirt off Shoulder, Kanye We Dont Care, song length is over estimated (4:56 vs 3:59), Jay Z and Nas is underestimating play length? When song is played get actual time from audio element and re save it?
-//If no year in ID3 tags don't show () next to title
-//If no title / CD OR title / Cd is junk then show prent dir + file name 
-//Warning: Division by zero in /var/www/nplay/index.php on line 716 when adding work directory
-//Add: Mute button
-
-//Misc:
-//Loading stations footer for the first time interupts music playback each load on chrome sometimes, xbone fine
-
 error_reporting(E_ALL);
 ini_set("display_errors", 1);
 
@@ -163,7 +135,7 @@ $footerHeight = "360";
 ?>
 <html>
 <head>
-	<title>Nplay</title>
+	<title>nPlay</title>
 	<script src="jquery-2.0.3.min.js"></script>
 
 </head>
@@ -210,6 +182,12 @@ html {
 	position: absolute; 
 	bottom:5px; 
 	right:5px;
+}
+
+#muteButton {
+	position: absolute;
+	bottom: 160px;
+	right: 5px;
 }
 
 .nowPlayingP, .nowPlayingArtist, .nowPlayingSong, .nowPlayingInfo, .stationInfo {
@@ -319,10 +297,8 @@ html {
 			$dispLength = gmdate("H:i:s", $station[3][$fileIndex][1]);
 		else
 			$dispLength = gmdate("i:s", $station[3][$fileIndex][1]);
-		
 
 		$station[3][$fileIndex][0] = str_replace($directory."/", "", $station[3][$fileIndex][0]);
-
 ?>
 		<center>
 			<audio id="nplayer" oncanplay="Play();">
@@ -398,10 +374,14 @@ html {
 ?>
 		<p id="songInfo" class='nowPlayingArtist'><?echo $id3["artist"];?></p>
 		<p id="songInfo" class='nowPlayingSong'><?echo $id3["title"]." ($dispLength)";?></p>
-		<p id="songInfo" class='nowPlayingInfo'><?echo $id3["album"]." (".$id3["year"].")";?></p>
+		<p id="songInfo" class='nowPlayingInfo'><?echo $id3["album"]; if(isset($id3["year"]) && $id3["year"] != "") echo " (".$id3["year"].")";?></p>
 <?
 	}
 ?>
+
+	<div id='muteButton'>
+		<button onClick="Mute();">Mute</button>
+	</div>
 
 	<div id='stationsButton'>
 		<button>Stations</button>
@@ -473,6 +453,15 @@ $(document).ready(function(){
 	});
 
 });
+
+function Mute()
+{
+	var player = document.getElementById("nplayer");
+	if(player.volume == 0)
+		$('#nplayer').animate({volume: 1}, 2000);
+	else
+		$('#nplayer').animate({volume: 0}, 2000);		
+}
 
 function Play()
 {
@@ -578,7 +567,7 @@ function ShowFiles($directory=null)
 		{
 			$fullPath = $directory."/".$fileName;
 			$fileType = filetype($fullPath);
-			if($fileType == "dir" && $fileName != ".." && $fileName != ".")
+			if($fileType == "dir" && $fileName != ".." && $fileName != "." && $fileName != "System Volume Information")
 				$directories[] = array($fileName, $fullPath);
 			else
 			{
@@ -712,6 +701,9 @@ function GetMp3LengthInSeconds($fileName)
 {
 	$bitRateSampleRate = GetMP3BitRateSampleRate($fileName);
 	$bitRate = $bitRateSampleRate["bitRate"];
+
+	var_dump($fileName);
+	var_dump($bitRateSampleRate);
 
 	$fileSize = filesize($fileName);
 	$fileSizeKbits = floor(($fileSize / 1024) * 8);
