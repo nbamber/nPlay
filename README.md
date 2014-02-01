@@ -25,6 +25,7 @@ Bug with Jay Z Linkin Park Dirt off Shoulder, Kanye We Dont Care, song length is
 If no title / CD OR title / Cd is junk then show prent dir + file name 
 Warning: Division by zero in /var/www/nplay/index.php on line 716 when adding work directory - mainly for m4as, length is wrong
 Mute reset on next track
+Stop Mute displaying stations
 
 //Misc:
 Loading stations footer for the first time interupts music playback each load on chrome sometimes, xbone fine
