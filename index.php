@@ -101,6 +101,7 @@ else
 
 	$playTime = 0;
 	$lastPlayTime = 0;
+	$fileIndex = 0;
 
 	for($i = 0; $i < count($station[3]); $i++)
 	{
@@ -122,7 +123,7 @@ else
 			$timeDiff = $timeDiff - $lastPlayTime;
 			break;
 		}
-
+		
 		$lastPlayTime = $playTime;
 	}
 
@@ -184,10 +185,15 @@ html {
 	right:5px;
 }
 
-#muteButton {
+#muteButtonDiv {
 	position: absolute;
-	bottom: 160px;
+	bottom: 120px;
 	right: 5px;
+}
+
+.genericButton {
+	width: 100px;
+	height: 50px;
 }
 
 .nowPlayingP, .nowPlayingArtist, .nowPlayingSong, .nowPlayingInfo, .stationInfo {
@@ -326,6 +332,7 @@ html {
 					<? ShowFiles($_REQUEST["currDir"]); ?>
 
 				<input type="submit" name="submit" value="Add Station">
+				<input type="button" name="cancel" value="Cancel" onClick="window.location.assign('index.php');">
 			</form>
 		</div>
 		</center>
@@ -374,17 +381,17 @@ html {
 ?>
 		<p id="songInfo" class='nowPlayingArtist'><?echo $id3["artist"];?></p>
 		<p id="songInfo" class='nowPlayingSong'><?echo $id3["title"]." ($dispLength)";?></p>
-		<p id="songInfo" class='nowPlayingInfo'><?echo $id3["album"]; if(isset($id3["year"]) && $id3["year"] != "") echo " (".$id3["year"].")";?></p>
+		<p id="songInfo" class='nowPlayingInfo'><?echo $id3["album"]; if(isset($id3["year"]) && is_numeric($id3["year"])) echo " (".$id3["year"].")";?></p>
 <?
 	}
 ?>
 
-	<div id='muteButton'>
-		<button onClick="Mute();">Mute</button>
+	<div id='muteButtonDiv'>
+		<button id='muteButton' class='genericButton'>Mute</button>
 	</div>
 
 	<div id='stationsButton'>
-		<button>Stations</button>
+		<button class='genericButton'>Stations</button>
 	</div>
 </div>
 
@@ -452,15 +459,19 @@ $(document).ready(function(){
 		}
 	});
 
+	$("#muteButton").click(function(e){
+		Mute();
+		event.stopPropagation();
+	});
 });
 
 function Mute()
 {
 	var player = document.getElementById("nplayer");
 	if(player.volume == 0)
-		$('#nplayer').animate({volume: 1}, 2000);
+		$('#nplayer').animate({volume: 1}, 1000);
 	else
-		$('#nplayer').animate({volume: 0}, 2000);		
+		$('#nplayer').animate({volume: 0}, 1000);	
 }
 
 function Play()
@@ -473,9 +484,17 @@ function Play()
 	{
 		player.currentTime = <?echo $timeDiff;?>;
 
-		player.addEventListener("ended", function(){
-			setTimeout(function(){window.location.assign("index.php?fade=0")},1000);
-		});
+<?
+		//NB - Don't reload page if we are adding a station
+		if(!isset($_REQUEST["addStation"]))
+		{
+?>
+			player.addEventListener("ended", function(){
+				setTimeout(function(){window.location.assign("index.php?fade=0&currentVol="+player.volume)},1000);
+			});
+<?
+		}
+?>
 
 		player.play();
 <?
@@ -484,6 +503,12 @@ function Play()
 ?>
 		player.volume = 0;
 		$('#nplayer').animate({volume: 1}, 2000);
+<?
+	}
+	else if(isset($_REQUEST["currentVol"]) && is_numeric($_REQUEST["currentVol"]))
+	{
+?>
+		player.volume = <?echo $_REQUEST["currentVol"];?>;
 <?
 	}
 ?>
